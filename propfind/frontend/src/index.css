@@ -1,0 +1,131 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-main: #f7f8fb;
+  --surface-white: #ffffff;
+  --ink: #111827;
+  --muted: #667085;
+  --line: #e5e7eb;
+  --brand: #111827;
+  --accent: #2563eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-main);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom light scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #f3f4f6 0%,
+    #e5e7eb 50%,
+    #f3f4f6 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Property card hover */
+.prop-card {
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.prop-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 40px -28px rgba(15, 23, 42, 0.35);
+}
+
+/* Custom range slider */
+input[type='range'] {
+  -webkit-appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #111827;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.28);
+}
+
+.badge {
+  @apply inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[11px] font-semibold;
+}
+
+.badge-blue {
+  @apply badge bg-blue-50 text-blue-700 border-blue-100;
+}
+
+.badge-green {
+  @apply badge bg-emerald-50 text-emerald-700 border-emerald-100;
+}
+
+.badge-yellow {
+  @apply badge bg-amber-50 text-amber-700 border-amber-100;
+}
+
+.badge-red {
+  @apply badge bg-rose-50 text-rose-700 border-rose-100;
+}
+
+.badge-gold {
+  @apply badge bg-stone-100 text-stone-800 border-stone-200;
+}
+
+.badge-purple {
+  @apply badge bg-violet-50 text-violet-700 border-violet-100;
+}
+
+.badge-indigo {
+  @apply badge bg-slate-100 text-slate-700 border-slate-200;
+}
+
+.badge-emerald {
+  @apply badge bg-emerald-50 text-emerald-700 border-emerald-100;
+}
+
+.focus-ring {
+  @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/10 focus-visible:ring-offset-2;
+}

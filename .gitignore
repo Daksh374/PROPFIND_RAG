@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+build/
+dist/
+.eggs/
+*.egg
+*.whl
+*.env
+*.venv
+venv/
+ENV/
+env/
+Pipfile.lock
+poetry.lock
+.python-version
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VS Code
+.vscode/
+
+# IDEs
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# MacOS
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite3
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Environment files
+.env
+.env.*
+
+# System files
+Thumbs.db
+
+# Temporary files
+*.swp
+*.tmp
+*~
