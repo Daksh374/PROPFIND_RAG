@@ -23,6 +23,8 @@ export default function PropertyCard({ property: prop, isSelected, onCompareTogg
   const [inquiring, setInquiring] = useState(false);
   const [inquiryStatus, setInquiryStatus] = useState('');
 
+  const propertyId = prop.property_id || prop.id;
+
   const handleInquire = async () => {
     const message = `Hi, I'm interested in ${prop.title}. Could you please share more details?`;
     setInquiring(true);
@@ -60,7 +62,12 @@ export default function PropertyCard({ property: prop, isSelected, onCompareTogg
       <div>
         <div className="p-4">
           <div className="mb-3 flex items-start justify-between gap-2">
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
+              {propertyId && (
+                <span className="badge border border-slate-200 bg-slate-100 text-slate-700 font-mono font-medium">
+                  ID: {propertyId}
+                </span>
+              )}
               <span className={LISTING_COLORS[prop.listing_type] || 'badge-blue'}>
                 {prop.listing_type}
               </span>
@@ -128,6 +135,7 @@ export default function PropertyCard({ property: prop, isSelected, onCompareTogg
 
           {expanded && (
             <div className="mb-3 rounded-md border border-slate-200 bg-slate-50 p-3 text-xs leading-relaxed text-slate-600">
+              {propertyId && <p className="mb-1.5 font-semibold text-slate-800">Property ID: <span className="font-mono font-medium text-slate-600">{propertyId}</span></p>}
               <p className="mb-1">{prop.description_text}</p>
               {prop.listing_type === 'PG' && (
                 <div className="mt-2 space-y-1 font-medium">
