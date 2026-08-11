@@ -65,6 +65,18 @@ CRITICAL PRICE EXTRACTION RULES:
 - "above", "more than", "starting from", "at least", "min" X => set min_price: X (do NOT set max_price!)
 - "between X and Y" => set min_price: X, max_price: Y
 
+CRITICAL PG & FOOD RULES:
+- "food", "food included", "with food", "meals", "mess" => set food_included: true (do NOT put "food" or "food included" in amenities!)
+- "without food", "food not included", "no food" => set food_included: false
+- "veg" / "vegetarian" => set food_type: "VEG"
+- "non-veg" / "non vegetarian" => set food_type: "NON_VEG"
+- "boys", "male", "gents" => set gender_preference: "MALE"
+- "girls", "female", "ladies" => set gender_preference: "FEMALE"
+- "unisex", "co-ed", "both" => set gender_preference: "UNISEX"
+- "single", "private room" => set occupancy_type: "SINGLE"
+- "double", "twin" => set occupancy_type: "DOUBLE_SHARING"
+- "triple" => set occupancy_type: "TRIPLE_SHARING"
+
 Return ONLY a valid JSON object with these keys (omit keys if not specified in query):
 {
   "property_id": "string (e.g. PROP1001) or null",
@@ -75,7 +87,11 @@ Return ONLY a valid JSON object with these keys (omit keys if not specified in q
   "listing_type": "RENT" | "SALE" | "PG" | null,
   "property_type": "APARTMENT" | "BUILDER_FLOOR" | "INDEPENDENT_HOUSE" | "PG" | null,
   "near_metro": true | false | null,
-  "amenities": ["amenity names mentioned by the user"] | null
+  "food_included": true | false | null,
+  "food_type": "VEG" | "NON_VEG" | "BOTH" | null,
+  "occupancy_type": "SINGLE" | "DOUBLE_SHARING" | "TRIPLE_SHARING" | null,
+  "gender_preference": "MALE" | "FEMALE" | "UNISEX" | "ANY" | null,
+  "amenities": ["amenity names mentioned by the user (excluding food/meals)"] | null
 }
 Output ONLY raw valid JSON."""
 
@@ -110,7 +126,7 @@ _REAL_ESTATE_TERMS = {
     "sale", "buy", "purchase", "apartment", "flat", "house", "home",
     "builder floor", "pg", "paying guest", "bhk", "locality", "metro",
     "amenity", "amenities", "budget", "price", "owner", "visit",
-    "inquiry", "compare", "sqft", "room", "accommodation",
+    "inquiry", "compare", "sqft", "room", "accommodation", "food",
 }
 
 
@@ -175,6 +191,31 @@ def _rule_based_filters(query: str) -> dict[str, Any]:
     if re.search(r"\bnear\s+(?:a\s+)?metro\b|\bmetro\s+(?:station|connectivity)\b", q):
         filters["near_metro"] = True
 
+    if re.search(r"\b(?:with\s+)?food(?:\s+included)?\b|\bmeals?(?:\s+included)?\b|\bmess\b", q):
+        if not re.search(r"\bwithout\s+food\b|\bno\s+food\b", q):
+            filters["food_included"] = True
+    elif re.search(r"\bwithout\s+food\b|\bno\s+food\b", q):
+        filters["food_included"] = False
+
+    if re.search(r"\bnon[- ]?veg(?:etarian)?\b", q):
+        filters["food_type"] = "NON_VEG"
+    elif re.search(r"\bveg(?:etarian)?\b", q):
+        filters["food_type"] = "VEG"
+
+    if re.search(r"\bgirls?\b|\bfemale\b|\bladies\b", q):
+        filters["gender_preference"] = "FEMALE"
+    elif re.search(r"\bboys?\b|\bmale\b|\bgents\b", q):
+        filters["gender_preference"] = "MALE"
+    elif re.search(r"\bunisex\b|\bco-?ed\b", q):
+        filters["gender_preference"] = "UNISEX"
+
+    if re.search(r"\bsingle(?:\s+occupancy|\s+room)?\b", q):
+        filters["occupancy_type"] = "SINGLE"
+    elif re.search(r"\bdouble(?:\s+sharing|\s+occupancy|\s+room)?\b|\btwin\b", q):
+        filters["occupancy_type"] = "DOUBLE_SHARING"
+    elif re.search(r"\btriple(?:\s+sharing|\s+occupancy|\s+room)?\b", q):
+        filters["occupancy_type"] = "TRIPLE_SHARING"
+
     money = r"(?:₹|rs\.?|inr)?\s*([\d,]+(?:\.\d+)?)\s*(crores?|cr|lakhs?|lacs?|l|k|thousand)?"
     between_match = re.search(rf"\bbetween\s+{money}\s+(?:and|to|-)\s+{money}", q)
     if between_match:
@@ -215,13 +256,31 @@ def extract_filters(query: str) -> dict[str, Any]:
         raw = resp.choices[0].message.content.strip()
         raw = re.sub(r"```(?:json)?", "", raw).strip().rstrip("```").strip()
         filters = json.loads(raw)
-        return _merge_filters(
+        merged = _merge_filters(
             {k: v for k, v in filters.items() if v is not None},
             fallback,
         )
     except Exception as e:
         logger.warning(f"Filter extraction failed: {e}")
-        return fallback
+        merged = fallback
+
+    # Clean up amenities to ensure "food" terms do not stay in amenities array
+    amenities = merged.get("amenities") or []
+    cleaned_amenities = []
+    for a in amenities:
+        a_lower = str(a).lower()
+        if any(term in a_lower for term in ["food", "meal", "mess"]):
+            if "food_included" not in merged:
+                merged["food_included"] = False if ("without" in a_lower or "no " in a_lower) else True
+        else:
+            cleaned_amenities.append(a)
+
+    if cleaned_amenities:
+        merged["amenities"] = cleaned_amenities
+    elif "amenities" in merged:
+        del merged["amenities"]
+
+    return merged
 
 
 def is_real_estate_query(query: str, filters: dict[str, Any]) -> bool:
@@ -269,6 +328,23 @@ def sql_filter_property_ids(session: Session, filters: dict) -> list[str] | None
 
     if filters.get("near_metro") is True:
         clauses.append(Property.near_metro.is_(True))
+
+    if filters.get("food_included") is True:
+        clauses.append(Property.food_included.is_(True))
+    elif filters.get("food_included") is False:
+        clauses.append(Property.food_included.is_(False))
+
+    if filters.get("food_type"):
+        ft = str(filters["food_type"]).upper()
+        clauses.append(Property.food_type.ilike(f"%{ft}%"))
+
+    if filters.get("gender_preference"):
+        gp = str(filters["gender_preference"]).upper()
+        clauses.append(Property.gender_preference.ilike(f"%{gp}%"))
+
+    if filters.get("occupancy_type"):
+        occ = str(filters["occupancy_type"]).upper()
+        clauses.append(Property.occupancy_type.ilike(f"%{occ}%"))
 
     for amenity in filters.get("amenities") or []:
         clauses.append(

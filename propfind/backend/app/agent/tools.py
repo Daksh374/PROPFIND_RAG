@@ -75,6 +75,7 @@ class SearchInput(BaseModel):
     listing_type: Optional[str] = Field(None, description="RENT, SALE, or PG")
     property_type: Optional[str] = Field(None, description="APARTMENT, BUILDER_FLOOR, INDEPENDENT_HOUSE, PG")
     near_metro: Optional[bool] = Field(None, description="Filter only properties near metro")
+    food_included: Optional[bool] = Field(None, description="Filter properties with food included")
 
 
 @tool(args_schema=SearchInput)
@@ -87,6 +88,7 @@ def search_properties(
     listing_type: Optional[str] = None,
     property_type: Optional[str] = None,
     near_metro: Optional[bool] = None,
+    food_included: Optional[bool] = None,
 ) -> str:
     """Search for properties using semantic search + structured filters."""
     filters = {k: v for k, v in {
@@ -97,6 +99,7 @@ def search_properties(
         "listing_type": listing_type,
         "property_type": property_type,
         "near_metro": near_metro,
+        "food_included": food_included,
     }.items() if v is not None}
 
     chunks = retrieve(query, n_results=6, filters=filters)
@@ -415,48 +418,9 @@ def send_owner_inquiry(property_id: str, message: Optional[str] = None, user_nam
         })
 
 
-# ─── Tool 7: generate_comparison_report ──────────────────────────────────────
-
-class ReportInput(BaseModel):
-    property_ids: list[str] = Field(..., description="2–4 property IDs for PDF report")
-    user_identifier: str = Field(default="anonymous", description="User identifier for record-keeping")
 
 
-@tool(args_schema=ReportInput)
-def generate_comparison_report(property_ids: list[str], user_identifier: str = "anonymous") -> str:
-    """Generate a PDF comparison report for 2–4 properties."""
-    from app.pdf.report import create_comparison_pdf
-    from app.database import Report
-
-    if len(property_ids) < 2:
-        return json.dumps({"error": "Need at least 2 property IDs for a comparison report."})
-
-    try:
-        file_path, report_data = create_comparison_pdf(property_ids, user_identifier)
-
-        with SessionLocal() as session:
-            report = Report(
-                user_identifier=user_identifier,
-                property_ids=json.dumps(property_ids),
-                file_path=file_path,
-            )
-            session.add(report)
-            session.commit()
-            session.refresh(report)
-            report_id = report.id
-
-        return json.dumps({
-            "report_id": report_id,
-            "file_path": file_path,
-            "download_url": f"/reports/{report_id}",
-            "message": f"PDF comparison report generated for {len(property_ids)} properties. Download at /reports/{report_id}",
-        })
-    except Exception as e:
-        logger.exception("PDF generation failed")
-        return json.dumps({"error": str(e)})
-
-
-# ─── Tool 8: cancel_visit ─────────────────────────────────────────────────────
+# ─── Tool 7: cancel_visit ─────────────────────────────────────────────────────
 
 class CancelVisitInput(BaseModel):
     property_id: str = Field(..., description="Property ID or number for which to cancel the scheduled visit (e.g. PROP1001 or 1007).")
@@ -516,8 +480,7 @@ ALL_TOOLS = [
     compare_properties,
     schedule_visit,
     send_owner_inquiry,
-    generate_comparison_report,
-    cancel_visit,
+    cancel_visit
 ]
 
 # Tools that require confirmation
