@@ -135,4 +135,4 @@ After starting the backend: **http://localhost:8000/docs**
 | Database | SQLite (SQLAlchemy) |
 | Backend | FastAPI + SSE |
 | Frontend | React + Vite + Tailwind CSS v3 |
-| PDF | ReportLab |
+
