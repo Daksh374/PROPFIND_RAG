@@ -15,8 +15,8 @@ GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
 if GROQ_API_KEY:
     os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
-GROQ_AGENT_MODEL: str = os.getenv("GROQ_AGENT_MODEL", "llama-3.3-70b-versatile")
-GROQ_FAST_MODEL: str = os.getenv("GROQ_FAST_MODEL", "llama-3.1-8b-instant")
+GROQ_AGENT_MODEL: str = os.getenv("GROQ_AGENT_MODEL", "openai/gpt-oss-120b")
+GROQ_FAST_MODEL: str = os.getenv("GROQ_FAST_MODEL", "openai/gpt-oss-20b")
 EMBED_MODEL: str = os.getenv("EMBED_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
 
 def _resolve_path(value: str | None, default: Path) -> Path:

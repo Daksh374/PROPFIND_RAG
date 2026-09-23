@@ -23,8 +23,8 @@ pip install -r requirements.txt
 # Ingest data (first time only — downloads ~90MB embedding model)
 python scripts/ingest.py
 
-# Start backend
-uvicorn app.main:app --reload --port 8000
+# Start backend (--reload-exclude keeps venv/data changes from causing restart loops)
+uvicorn app.main:app --reload --port 8000 --reload-exclude "$(pwd)/venv" --reload-exclude "$(pwd)/data"
 ```
 
 ### 2. Frontend Setup
@@ -128,7 +128,7 @@ After starting the backend: **http://localhost:8000/docs**
 
 | Layer | Technology |
 |---|---|
-| LLM | Groq `llama-3.3-70b-versatile` |
+| LLM | Groq `openai/gpt-oss-120b` (+ `openai/gpt-oss-20b` fast tier) |
 | Embeddings | `sentence-transformers/all-MiniLM-L6-v2` |
 | Vector DB | ChromaDB (persistent) |
 | Agent | LangGraph + LangChain-Groq |

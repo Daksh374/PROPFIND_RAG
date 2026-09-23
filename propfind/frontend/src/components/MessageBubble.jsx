@@ -1,20 +1,38 @@
 import React from 'react';
 import { Bot, User, Database, Zap, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 
-function formatMarkdown(text) {
-  if (!text) return '';
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-  return escaped
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code class="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-800">$1</code>')
-    .replace(/\n/g, '<br/>');
-}
+const markdownComponents = {
+  p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+  strong: ({ node, ...props }) => <strong className="font-semibold text-slate-950" {...props} />,
+  em: ({ node, ...props }) => <em {...props} />,
+  a: ({ node, ...props }) => (
+    <a className="text-navy-600 underline hover:text-navy-800" target="_blank" rel="noreferrer" {...props} />
+  ),
+  code: ({ node, ...props }) => (
+    <code className="rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono text-xs text-slate-800" {...props} />
+  ),
+  pre: ({ node, ...props }) => (
+    <pre className="mb-2 overflow-x-auto rounded border border-slate-200 bg-slate-50 p-2 font-mono text-xs text-slate-800 last:mb-0 [&>code]:border-0 [&>code]:bg-transparent [&>code]:p-0" {...props} />
+  ),
+  ul: ({ node, ...props }) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0" {...props} />,
+  ol: ({ node, ...props }) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0" {...props} />,
+  li: ({ node, ...props }) => <li {...props} />,
+  hr: ({ node, ...props }) => <hr className="my-3 border-slate-200" {...props} />,
+  table: ({ node, ...props }) => (
+    <div className="mb-2 overflow-x-auto rounded border border-slate-200 last:mb-0">
+      <table className="w-full border-collapse text-xs" {...props} />
+    </div>
+  ),
+  thead: ({ node, ...props }) => <thead className="bg-slate-50" {...props} />,
+  tr: ({ node, ...props }) => <tr className="border-b border-slate-100 last:border-0" {...props} />,
+  th: ({ node, ...props }) => (
+    <th className="px-3 py-2 text-left font-semibold text-slate-600" {...props} />
+  ),
+  td: ({ node, ...props }) => <td className="px-3 py-2 align-top text-slate-800" {...props} />,
+};
 
 export default function MessageBubble({ message }) {
   const isUser = message.role === 'user';
@@ -72,9 +90,13 @@ export default function MessageBubble({ message }) {
 
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm leading-relaxed text-slate-800 shadow-sm">
           {message.content ? (
-            <span
-              dangerouslySetInnerHTML={{ __html: formatMarkdown(message.content) }}
-            />
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[rehypeRaw]}
+              components={markdownComponents}
+            >
+              {message.content}
+            </ReactMarkdown>
           ) : null}
           {message.isStreaming && (
             <span className="ml-1 inline-block h-4 w-1 rounded-full bg-slate-900 animate-pulse" />

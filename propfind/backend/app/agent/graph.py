@@ -49,6 +49,7 @@ def _get_llm_with_tools(model_name: str = GROQ_AGENT_MODEL):
             model=model_name,
             temperature=0.2,
             max_tokens=2048,
+            model_kwargs={"reasoning_effort": "low"},
         )
         return llm.bind_tools(ALL_TOOLS)
     except Exception:
@@ -57,6 +58,7 @@ def _get_llm_with_tools(model_name: str = GROQ_AGENT_MODEL):
             model=GROQ_FAST_MODEL,
             temperature=0.2,
             max_tokens=2048,
+            model_kwargs={"reasoning_effort": "low"},
         )
         return llm.bind_tools(ALL_TOOLS)
 
@@ -168,6 +170,7 @@ def respond_node(state: AgentState) -> dict:
             model=GROQ_AGENT_MODEL,
             temperature=0.3,
             max_tokens=1024,
+            model_kwargs={"reasoning_effort": "low"},
         )
         response = llm.invoke(messages)
     except Exception as e:
@@ -177,6 +180,7 @@ def respond_node(state: AgentState) -> dict:
             model=GROQ_FAST_MODEL,
             temperature=0.3,
             max_tokens=1024,
+            model_kwargs={"reasoning_effort": "low"},
         )
         response = llm.invoke(messages)
 
@@ -438,8 +442,6 @@ def build_graph():
     g.add_node("confirm_gate", confirm_gate_node)
     g.add_node("execute_tools", execute_tools_node)
     g.add_node("await_confirmation", await_confirmation_node)
-    g.add_node("handle_confirmed", handle_confirmed_node)
-    g.add_node("handle_cancelled", handle_cancelled_node)
     g.add_node("respond", respond_node)
 
     g.add_edge(START, "plan")
@@ -447,8 +449,6 @@ def build_graph():
     g.add_conditional_edges("confirm_gate", route_after_confirm_gate)
     g.add_edge("execute_tools", "respond")
     g.add_edge("await_confirmation", END)
-    g.add_edge("handle_confirmed", "respond")
-    g.add_edge("handle_cancelled", END)
     g.add_edge("respond", END)
 
     return g.compile()

@@ -59,6 +59,7 @@ User question: {query}"""
         messages=messages,
         temperature=0.3,
         max_tokens=1024,
+        reasoning_effort="low",
     )
     return resp.choices[0].message.content
 
@@ -87,6 +88,7 @@ User question: {query}"""
         messages=messages,
         temperature=0.3,
         max_tokens=1024,
+        reasoning_effort="low",
         stream=True,
     )
 

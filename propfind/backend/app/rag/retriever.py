@@ -45,6 +45,7 @@ def reformulate_query(query: str, chat_history: list[dict] | None = None) -> str
             messages=messages,
             temperature=0,
             max_tokens=100,
+            reasoning_effort="low",
         )
         reformulated = resp.choices[0].message.content.strip()
         if reformulated and len(reformulated) > 2:
@@ -252,6 +253,7 @@ def extract_filters(query: str) -> dict[str, Any]:
             ],
             temperature=0,
             max_tokens=200,
+            reasoning_effort="low",
         )
         raw = resp.choices[0].message.content.strip()
         raw = re.sub(r"```(?:json)?", "", raw).strip().rstrip("```").strip()

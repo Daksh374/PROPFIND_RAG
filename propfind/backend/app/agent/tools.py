@@ -433,6 +433,12 @@ def cancel_visit(property_id: str, visit_id: Optional[int] = None) -> str:
     Cancel and remove a scheduled visit for a given property.
     Deletes the visit schedule from the database so it is removed from the Activity tab.
     """
+    if not visit_id and not str(property_id or "").strip():
+        return json.dumps({
+            "status": "error",
+            "message": "A property ID or visit ID is required to cancel a visit."
+        })
+
     with SessionLocal() as session:
         prop = resolve_property_id(property_id, session)
         target_pid = prop.property_id if prop else (f"PROP{property_id}" if str(property_id).isdigit() else property_id)
